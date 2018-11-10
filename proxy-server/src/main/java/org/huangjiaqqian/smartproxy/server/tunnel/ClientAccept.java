@@ -51,6 +51,12 @@ public class ClientAccept {
 				
 				if(tunnel != null) {
 					dragoniteSocket.send("false:已存在已登录的用户".getBytes());
+					try {
+						dragoniteSocket.closeGracefully();
+					} catch (SenderClosedException | InterruptedException | IOException e1) {
+						e1.printStackTrace();
+					}
+					return;
 				}
 				
 				dragoniteSocket.send("true".getBytes());
