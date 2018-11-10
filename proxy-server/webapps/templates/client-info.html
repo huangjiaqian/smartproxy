@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>默认标题</title>
+#include("_meta.html")
+</head>
+<body>
+	<div class="layui-layout layui-layout-admin">
+		#include("_menu.html")
+
+		<div class="layui-body">
+			<div class="layui-tab layui-tab-brief">
+				<ul class="layui-tab-title site-demo-title">
+					<li class="layui-this add-client-title">
+					#(type=="add"?"添加客户端":"编辑客户端")
+					</li>
+				</ul>
+				<input type="hidden" id="clientId" name="clientId"  value='#(client?client.id:"")' />
+				<div class="main-content">
+					<div class="layui-form-item">
+						<label class="layui-form-label i18n-client-name">客户端名称</label>
+						<div class="layui-input-inline">
+							<input type="text" name="name" id="name" autocomplete="off"
+								placeholder="请输入客户端名称" class="layui-input" value='#(client?client.name:"")' />
+						</div>
+					</div>
+					<div class="layui-form-item">
+						<label class="layui-form-label i18n-client-key">客户端密钥</label>
+						<div class="layui-input-inline">
+							<input type="text" name="clientKey" id="clientKey" readonly="readonly" autocomplete="off"
+								placeholder="请输入客户端密钥" class="layui-input"  value='#(client?client.clientKey:"")' />
+						</div>
+						<div class="layui-form-mid">
+							<a class="layui-btn layui-btn-mini random-key random" onclick="genClientKey()">生成随机密钥</a>
+						</div>
+					</div>
+					<div class="layui-form-item">
+						<div class="layui-input-block">
+							<button class="layui-btn add" onclick="updateClient()">提交</button>
+							#if(type=="update")
+							<button class="layui-btn layui-btn-primary back" onclick="window.location.href='/home?method=index'">返回</button>
+							#end
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+
+		#include("_footer.html")
+	</div>
+	<script type="text/javascript">
+	var layer;
+	layui.use('layer', function(){
+	  layer = layui.layer;
+	}); 
+	</script>
+	<script type="text/javascript">
+		function genClientKey() {
+			$.get("/tool?method=genClientKey", {}, function(data, textStatus, req) {
+				$('#clientKey').val(data);
+			});
+		}
+		var isAdd = '#(type)' != 'update';
+		function updateClient() {
+			var name = $('#name').val();
+			var clientKey = $('#clientKey').val();
+			if(!name) {
+				layer.msg('名称不能为空！');
+				return;
+			}
+			if(!clientKey) {
+				layer.msg('key不能为空！');
+				return;
+			}
+			
+			
+			var sendData = {
+				name: name,
+				clientKey: clientKey
+			}
+			if(!isAdd) {
+				sendData.id = $('#clientId').val();
+			}
+			
+			$.get("/tool?method=updateClient", sendData, function(data, textStatus, req) {
+				var obj = $.parseJSON(data);
+				if(obj.success == 'true') {
+					if(isAdd) {
+						layer.alert('添加成功', function(index){
+						  window.location.href = '/home?method=index';
+						}); 
+					} else {
+						layer.msg('修改成功');
+					}
+					
+				} else {
+					layer.msg(obj.msg);
+				}
+			});
+		}
+	
+	</script>
+
+	
+</body>
+</html>

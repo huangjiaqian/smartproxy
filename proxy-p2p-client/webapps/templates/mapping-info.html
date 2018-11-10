@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>默认标题</title>
+#include("_meta.html")
+</head>
+<body>
+	<div class="layui-layout layui-layout-admin">
+		#include("_menu.html")
+
+		<div class="layui-body">
+			<div class="layui-tab layui-tab-brief">
+				<ul class="layui-tab-title site-demo-title">
+					<li class="layui-this add-mapping-title">
+					#(type=="add"?"添加映射":"编辑映射信息")
+					</li>
+				</ul>
+				<input type="hidden" id="mappingId" name="mappingId"  value='#(mapping?mapping.id:"")' />
+				<div class="main-content">
+					<div class="layui-form-item">
+						<label class="layui-form-label i18n-mapping-name">映射名称</label>
+						<div class="layui-input-inline">
+							<input type="text" name="name" id="name" autocomplete="off"
+								title="映射名称" placeholder="请输入映射名称" class="layui-input" value='#(mapping?mapping.name:"")' />
+						</div>
+					</div>
+					<div class="layui-form-item">
+						<label class="layui-form-label i18n-mapping-key">客户端密钥</label>
+						<div class="layui-input-inline">
+							<input type="text" name="clientKey" id="clientKey" autocomplete="off"
+								title="客户端密钥" placeholder="请输入客户端密钥" class="layui-input" value='#(mapping?mapping.clienKey:"")' />
+						</div>
+					</div>
+					
+					<div class="layui-form-item">
+						<label class="layui-form-label i18n-mapping-key">服务器地址</label>
+						<div class="layui-input-inline">
+							<input type="text" name="remoteHost" id="remoteHost" autocomplete="off"
+								title="服务器地址" placeholder="请输入服务器IP" class="layui-input"  value='#(mapping?mapping.remoteHost:"")' />
+						</div>
+					</div>
+					
+					<div class="layui-form-item">
+						<label class="layui-form-label i18n-mapping-key">服务器端口</label>
+						<div class="layui-input-inline">
+							<input type="text" name="remotePort" id="remotePort" autocomplete="off"
+								title="服务器端口" placeholder="请输入服务器端口" class="layui-input"  value='#(mapping?mapping.remotePort:"")' />
+						</div>
+					</div>
+
+					
+					<div class="layui-form-item">
+						<label class="layui-form-label i18n-mapping-key">映射IP</label>
+						<div class="layui-input-inline">
+							<input type="text" name="natHost" id="natHost" autocomplete="off"
+								title="映射IP" placeholder="请输入映射IP" class="layui-input"  value='#(mapping?mapping.natHost:"")' />
+						</div>
+					</div>
+					
+					<div class="layui-form-item">
+						<label class="layui-form-label i18n-mapping-key">映射端口</label>
+						<div class="layui-input-inline">
+							<input type="text" name="natPort" id="natPort" autocomplete="off"
+								title="映射端口" placeholder="请输入映射端口" class="layui-input"  value='#(mapping?mapping.natPort:"")' />
+						</div>
+					</div>
+					
+					<div class="layui-form-item">
+						<label class="layui-form-label i18n-mapping-key">本地端口</label>
+						<div class="layui-input-inline">
+							<input type="text" name="localPort" id="localPort" autocomplete="off"
+								title="本地端口" placeholder="请输入本地端口" class="layui-input"  value='#(mapping?mapping.localPort:"")' />
+						</div>
+					</div>
+					
+					<div class="layui-form-item">
+						<label class="layui-form-label i18n-mapping-key">下行网速</label>
+						<div class="layui-input-inline">
+							<input type="text" name="downMbps" id="downMbps" autocomplete="off"
+								title="下行网速" placeholder="请输入下行网速" class="layui-input"  value='#(mapping?mapping.downMbps:"")' />
+						</div>
+					</div>
+					
+					<div class="layui-form-item">
+						<label class="layui-form-label i18n-mapping-key">上行网速</label>
+						<div class="layui-input-inline">
+							<input type="text" name="upMbps" id="upMbps" autocomplete="off"
+								title="上行网速" placeholder="请输入上行网速" class="layui-input"  value='#(mapping?mapping.upMbps:"")' />
+						</div>
+					</div>
+					
+					<div class="layui-form-item">
+						<div class="layui-input-block">
+							<button class="layui-btn add" onclick="updateConfig()">提交</button>
+							#if(type=="update")
+							<button class="layui-btn layui-btn-primary back" onclick="window.location.href='/home?method=index'">返回</button>
+							#end
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		#include("_footer.html")
+	</div>
+	<script type="text/javascript">
+	var layer;
+	layui.use('layer', function(){
+	  layer = layui.layer;
+	}); 
+	</script>
+	<script type="text/javascript">
+		function checkNullInput(inputArr) {
+
+		
+			for(var i = 0;i < inputArr.length;i++) {
+				var $dom = $('#' + inputArr[i]);
+				if(!$dom.val()) {
+					layer.msg($dom.attr('placeholder'));
+					return false;
+				}
+			}
+			
+			return true;
+		}
+		var isAdd = '#(type)' != 'update';
+		function updateConfig() {
+		
+			if(!checkNullInput(['name','clientKey','remoteHost','remotePort','natHost','natPort','localPort','downMbps','upMbps'])) {
+				return;
+			}
+		
+			var name = $('#name').val();
+			var clientKey = $('#clientKey').val();
+			var remoteHost = $('#remoteHost').val();
+			var remotePort = $('#remotePort').val();
+			var natHost = $('#natHost').val();
+			var natPort = $('#natPort').val();
+			var localPort = $('#localPort').val();
+			var downMbps = $('#downMbps').val();
+			var upMbps = $('#upMbps').val();
+			
+			
+						
+			var sendData = {
+				name: name,
+				clientKey: clientKey,
+				remoteHost: remoteHost,
+				remotePort: remotePort,
+				natHost: natHost,
+				natPort: natPort,
+				localPort: localPort,
+				downMbps: downMbps,
+				upMbps: upMbps
+			}
+			if(!isAdd) {
+				sendData.id = $('#mappingId').val();
+			}
+			
+			$.get("/home?method=doUpdateMapping", sendData, function(data, textStatus, req) {
+				var obj = $.parseJSON(data);
+				if(obj.success == 'true') {
+					if(isAdd) {
+						layer.alert('添加成功', function(index){
+						  window.location.href = '/home?method=index';
+						}); 
+					} else {
+						layer.msg('修改成功');
+					}
+					
+				} else {
+					layer.msg(obj.msg);
+				}
+			});
+		}
+	
+	</script>
+
+	
+</body>
+</html>

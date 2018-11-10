@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>默认标题</title>
+#include("_meta.html")
+</head>
+<body>
+	<div class="layui-layout layui-layout-admin">
+		#include("_menu.html")
+
+		<div class="layui-body">
+			<div class="layui-tab layui-tab-brief">
+				<ul class="layui-tab-title site-demo-title">
+					<li class="layui-this detail-page">端口映射列表</li>
+				</ul>
+				<div class="main-content">
+					<table class="layui-table" lay-skin="line">
+						<thead>
+							<tr>
+								<th class="th-client-name">客户端名称</th>
+								<th class="th-client-key">客户端密钥</th>
+								<th class="th-client-key">服务器地址</th>
+								<th class="th-client-key">映射地址</th>
+								<th class="th-client-key">本地端口</th>
+								<th class="th-client-key">上行网速</th>
+								<th class="th-client-key">下行网速</th>
+								<th class="th-status">状态</th>
+								<th class="th-options">操作</th>
+							</tr>
+						</thead>
+						<tbody>
+								#for(obj : list)
+									
+									<tr>
+										<td>#(obj['name'])</td>
+										<td>#(obj['clientKey'])</td>
+										<td>#(obj['remoteHost']):#(obj['remotePort'])</td>
+										<td>#(obj['natHost']):#(obj['natPort'])</td>
+										<td>#(obj['localPort'])</td>
+										<td>#(obj['downMbps'])</td>
+										<td>#(obj['upMbps'])</td>
+										
+										<td>
+											#if(obj['enable'] == 'true')
+												<span class="layui-badge layui-bg-green">已启用</span>											
+											#else
+												<span class="layui-badge layui-bg-gray">已关闭</span>
+											#end
+											
+										</td>
+										<td>
+										#if(obj['enable'] == 'true')
+											<a data-index="0"
+												class="layui-btn layui-btn-danger layui-btn-mini client-edit" onclick="closeConnect('#(obj['id'])')">关闭</a>	
+										#else
+											<a data-index="0"
+											class="layui-btn layui-btn-mini client-edit" onclick="doConnect('#(obj["id"])')">启用</a>											
+										#end
+										
+											<a data-index="0"
+											class="layui-btn layui-btn-danger layui-btn-mini client-delete" onclick="doDelete('#(obj['id'])')">删除</a>
+										</td>
+									</tr>
+									
+								#else
+								   <tr><td colspan="9">
+								   		暂无记录
+								   </td></tr>
+								#end
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+
+		#include("_footer.html")
+	</div>
+	<script type="text/javascript">
+		var layer;
+		layui.use('layer', function() {
+			layer = layui.layer;
+		});
+	</script>
+	<script type="text/javascript">
+		function doConnect(id) {
+			layer.confirm('确定启用吗?', function(index){
+				$.get("/home?method=doConnectMapping&mappingId="+id, {}, function(data, textStatus, req) {
+					if(data != 'true') {
+						layer.close(index);
+						layer.alert(data, function(index2){
+							layer.close(index2);
+						}); 
+						return;
+					}
+					window.location.reload();
+				});
+			});
+		}
+		function closeConnect(id) {
+			layer.confirm('确定关闭吗?', function(index){
+				$.get("/home?method=doCloseMapping&mappingId="+id, {}, function(data, textStatus, req) {
+					if(data != 'true') {
+						layer.close(index);
+						layer.alert(data, function(index2){
+							layer.close(index2);
+						}); 
+						return;
+					}
+					window.location.reload();
+				});
+			});
+		}
+		function doDelete(id) {
+			layer.confirm('确定删除吗?', function(index){
+				$.get("/home?method=doDelMapping&mappingId="+id, {}, function(data, textStatus, req) {
+					if(data != 'true') {
+						layer.close(index);
+						layer.alert(data, function(index2){
+							layer.close(index2);
+						}); 
+						return;
+					}
+					window.location.reload();
+				});
+			  
+			});
+		}
+	</script>
+</body>
+</html>

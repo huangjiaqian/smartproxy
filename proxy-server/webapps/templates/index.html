@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>默认标题</title>
+#include("_meta.html")
+</head>
+<body>
+	<div class="layui-layout layui-layout-admin">
+		#include("_menu.html")
+
+		<div class="layui-body">
+			<div class="layui-tab layui-tab-brief">
+				<ul class="layui-tab-title site-demo-title">
+					<li class="layui-this detail-page">客户端列表</li>
+				</ul>
+				<div class="main-content">
+					<table class="layui-table" lay-skin="line">
+						<thead>
+							<tr>
+								<th class="th-client-name">客户端名称</th>
+								<th class="th-client-key">客户端密钥</th>
+								<th class="th-status">状态</th>
+								<th class="th-options">操作</th>
+							</tr>
+						</thead>
+						<tbody>
+								#for(obj : list)
+									<tr>
+										<td>#(obj['name'])</td>
+										<td>#(obj['clientKey'])</td>
+										<td>
+											#if(obj['status'] == 'online')
+												<span class="layui-badge layui-bg-green">在线</span>											
+											#else
+												<span class="layui-badge layui-bg-gray">离线</span>
+											#end
+											
+										</td>
+										<td><a data-index="0"
+											class="layui-btn layui-btn-mini client-edit" href="/home?method=editClient&id=#(obj['id'])">编辑</a> <a
+											data-index="0"
+											class="layui-btn layui-btn-danger layui-btn-mini client-delete" onclick="doDelete('#(obj['id'])')">删除</a>
+										</td>
+									</tr>
+								#else
+								   <tr><td colspan="4">
+								   		暂无添加客户端
+								   </td></tr>
+								#end
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+
+		#include("_footer.html")
+	</div>
+	<script type="text/javascript">
+		var layer;
+		layui.use('layer', function() {
+			layer = layui.layer;
+		});
+	</script>
+	<script type="text/javascript">
+	
+		function doDelete(id) {
+			layer.confirm('确认删除吗?', function(index){
+				$.get("/tool?method=deleteClient&id="+id, {}, function(data, textStatus, req) {
+					if(data != 'true') {
+						layer.close(index);
+						layer.alert(data, function(index2){
+							layer.close(index2);
+						}); 
+						return;
+					}
+					window.location.reload();
+				});
+			  
+			});
+		}
+	</script>
+</body>
+</html>

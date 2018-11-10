@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>默认标题</title> #include("_meta.html")
+</head>
+<body>
+	<div class="layui-layout layui-layout-admin">
+		#include("_menu.html")
+
+		<div class="layui-body">
+			<div class="layui-tab layui-tab-brief">
+				<ul class="layui-tab-title site-demo-title">
+					<li class="layui-this i18n-new-proxy">
+					#(type=="add"?"添加配置":"编辑配置")
+					</li>
+				</ul>
+				<input type="hidden" id="configId" name="configId"  value='#(config?config.id:"")' />
+				<div class="main-content">
+					<div class="layui-form-item">
+						<label class="layui-form-label i18n-lan-name">代理名称</label>
+						<div class="layui-input-block">
+							<input type="text" name="name" id="name" autocomplete="off" value="#(config?config.name:'')" placeholder=""
+								class="layui-input">
+						</div>
+					</div>
+					<div class="layui-form-item">
+						<label class="layui-form-label i18n-lan-inetport">公网端口</label>
+						<div class="layui-input-block">
+							<input type="text" name="inetPort" id="inetPort" autocomplete="off"  value="#(config?config.inetPort:'')"
+								placeholder="请输入公网出口端口，请确保端口没有被其他程序占用" class="layui-input">
+						</div>
+					</div>
+					<div class="layui-form-item">
+						<label class="layui-form-label i18n-lan-ip">后端IP</label>
+						<div class="layui-input-block">
+							<input type="text" name="lanHost" id="lanHost" autocomplete="off"  value="#(config?config.lanHost:'')"
+								placeholder="请输入后端代理IP" class="layui-input">
+						</div>
+					</div>
+					<div class="layui-form-item">
+						<label class="layui-form-label i18n-lan-ip">后端端口</label>
+						<div class="layui-input-block">
+							<input type="text" name="lanPort" id="lanPort" autocomplete="off" value="#(config?config.lanPort:'')"
+								placeholder="请输入后端代理端口" class="layui-input">
+						</div>
+					</div>
+					<div class="layui-form-item">
+						<div class="layui-input-block">
+							<button class="layui-btn add" onclick="update()">提交</button>
+							<button class="layui-btn layui-btn-primary back" onclick="window.location.href='/home?method=clientConfigInfo&clientId=#(clientId)'">返回</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+
+		#include("_footer.html")
+	</div>
+	<script type="text/javascript">
+		var layer;
+		layui.use('layer', function() {
+			layer = layui.layer;
+		});
+	</script>
+	<script type="text/javascript">
+		var clientId = '#(clientId)';
+		var isAdd = '#(type)' != 'update';
+		function update() {
+			var name = $('#name').val();
+			var inetPort = $('#inetPort').val();
+			var lanHost = $('#lanHost').val();
+			var lanPort = $('#lanPort').val();
+			if (!name) {
+				layer.msg('代理名称不能为空！');
+				return;
+			}
+			if (!inetPort) {
+				layer.msg('公网端口不能为空！');
+				return;
+			}
+			if (!lanHost) {
+				layer.msg('后端IP不能为空！');
+				return;
+			}
+			if (!lanPort) {
+				layer.msg('后端端口不能为空！');
+				return;
+			}
+			
+			var sendData = {
+				name : name,
+				inetPort : inetPort,
+				lanHost : lanHost,
+				lanPort : lanPort,
+				clientId : clientId
+			}
+			if (!isAdd) {
+				sendData.id = $('#configId').val();
+			}
+	
+			$.get("/tool?method=updateConfig", sendData, function(data, textStatus, req) {
+				var obj = $.parseJSON(data);
+				if (obj.success == 'true') {
+					if (isAdd) {
+						layer.alert('添加成功', function(index) {
+							window.location.href = '/home?method=clientConfigInfo&clientId=' + clientId;
+						});
+					} else {
+						layer.msg('修改成功');
+					}
+	
+				} else {
+					layer.msg(obj.msg);
+				}
+			});
+		}
+	</script>
+
+
+</body>
+</html>

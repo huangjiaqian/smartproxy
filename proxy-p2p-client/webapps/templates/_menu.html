@@ -1,0 +1,104 @@
+<div class="layui-header">
+	<div class="layui-logo">p2p客户端&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+	<!-- 
+	<ul class="layui-nav layui-layout-right">
+		<li class="layui-nav-item"><a href="javascript:doSetting();"
+			class="logout">个人设置</a></li>
+		<li class="layui-nav-item"><a href="javascript:doExitLogin();"
+			class="logout">退出</a></li>
+	</ul>
+	 -->
+	 <ul class="layui-nav layui-layout-right">
+		<li class="layui-nav-item"><a href="javascript:doExit();"
+			class="logout">完全关闭</a></li>
+	</ul>
+</div>
+
+<div class="layui-side layui-bg-black">
+	<div class="layui-side-scroll">
+
+		<ul class="layui-nav layui-nav-tree" lay-filter="test">
+			<!-- 侧边导航: <ul class="layui-nav layui-nav-tree layui-nav-side"> -->
+			<li class="layui-nav-item layui-nav-itemed"><a
+				href="javascript:;">端口映射管理</a>
+				<dl class="layui-nav-child">
+					<dd #(currentMenu== "mappingList" ? "class='layui-this' " : "")>
+						<a href="/home?method=index">映射列表</a>
+					</dd>
+					<dd #(currentMenu== "addMapping" ? "class='layui-this' " : "")>
+						<a href="/home?method=addMapping">添加端口映射</a>
+					</dd>
+				</dl></li>
+		</ul>
+
+	</div>
+</div>
+
+<div id="userSettingBox" style="display: none;">
+		<div class="layui-tab layui-tab-brief">
+				<div class="main-content">
+					<div class="layui-form-item">
+						<label class="layui-form-label i18n-client-name">用户名</label>
+						<div class="layui-input-inline">
+							<input type="text" name="username" id="username" autocomplete="off"
+								placeholder="用户名" class="layui-input" value='#(_loginUser?_loginUser.username:"")' />
+						</div>
+					</div>
+					<div class="layui-form-item">
+						<label class="layui-form-label i18n-client-key">密码</label>
+						<div class="layui-input-inline">
+							<input type="password" name="password" id="password"  autocomplete="off"
+								placeholder="密码" class="layui-input" value='#(_loginUser?_loginUser.password:"")' />
+						</div>
+					</div>
+				</div>
+			</div>
+</div>
+	
+<script>
+
+	//注意：导航 依赖 element 模块，否则无法进行功能性操作
+	layui.use('element', function() {
+		var element = layui.element;
+
+	//…
+	});
+	function doSetting() {
+		layer.open({
+			title: '用户信息',
+			type : 1,
+			area: ['340px', '280px'],
+			offset: '100px',
+			content : $('#userSettingBox'),
+			btn : [ '确认', '取消' ],
+			yes : function(index, layero) {
+				var username = $('#username').val();
+				var password = $('#password').val();
+				$.get('/login?method=editUser', {
+					username: username,
+					password: password
+				}, function(data, textStatus, req) {
+					if(data=='true') {
+						layer.msg('修改成功！');
+						layer.close(index);
+					} else {
+						layer.msg('修改失败！');
+					}
+				});
+			}
+		});
+	}
+	function doExit() {
+		layer.confirm('此操作会完全停掉服务！确定完全关闭吗?', function(index){
+			layer.close(index);
+			$.get("/home?method=doExitSystem", {}, function(data, textStatus, req) {
+			});
+		  
+		});
+	}
+	function doExitLogin() {
+		$.get('/login?method=doExitLogin', {}, function(data, textStatus, req) {
+			window.location.href = '/login';
+		});
+	}
+</script>

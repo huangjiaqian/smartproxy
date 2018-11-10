@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>默认标题</title> #include("_meta.html")
+</head>
+<body>
+	<div class="layui-layout layui-layout-admin">
+		#include("_menu.html")
+
+		<div class="layui-body">
+			<div class="layui-tab layui-tab-brief">
+				<ul class="layui-tab-title site-demo-title">
+					<li class="layui-this tab-title">#(client?client.name:"") - 代理配置</li>
+				</ul>
+				<div class="main-content">
+					<table class="layui-table" lay-skin="line">
+						<thead>
+							<tr>
+								<th class="i18n-lan-name">代理名称</th>
+								<th class="i18n-lan-inetport">公网端口</th>
+								<th class="i18n-lan-ip">后端IP端口</th>
+								<th class="i18n-lan-ip">流量统计</th>
+								<th class="i18n-lan-ip">状态</th>
+								<th class="i18n-lan-options">操作</th>
+							</tr>
+						</thead>
+						<tbody>
+							#for(obj : list)
+								<tr>
+									<td>#(obj['name'])</td>
+									<td>
+										<a target="_blank" href="http://#(_host):#(obj['inetPort'])">#(obj['inetPort'])</a>
+									</td>
+									<td>
+										<a target="_blank" href="http://#(obj['lanHost']):#(obj['lanPort'])">#(obj['lanHost']):#(obj['lanPort'])</a>
+									</td>
+									<td>
+										#(org.huangjiaqqian.smartproxy.server.helper.Helper::displayFlow(obj['upFlow'], obj['downFlow']))
+									</td>
+									<td>
+											#if(obj['enable'] == 'true')
+												<span class="layui-badge layui-bg-green">已开启</span>											
+											#else
+												<span class="layui-badge layui-bg-gray">未开启</span>
+											#end
+									</td>
+									<td><a data-index="0"
+										class="layui-btn layui-btn-mini mapping-edit" href="/home?method=editConfig&clientId=#(client.id)&configId=#(obj['id'])">编辑</a> <a
+										data-index="0"
+										class="layui-btn layui-btn-danger layui-btn-mini mapping-delete" onclick="doDelete('#(obj['id'])')">删除</a>
+								</td>
+							</tr>
+							#else
+							   <tr><td colspan="6">
+							   		暂无配置信息
+							   </td></tr>
+							#end
+
+						</tbody>
+					</table>
+				</div>
+				<div class="layui-input-block"
+					style="float: left; margin-left: 15px;">
+					<button class="layui-btn mapping-add" onclick="addConfig()">添加配置</button>
+				</div>
+			</div>
+
+		</div>
+
+
+		#include("_footer.html")
+	</div>
+	<script type="text/javascript">
+		var layer;
+		layui.use('layer', function() {
+			layer = layui.layer;
+		});
+	</script>
+	<script type="text/javascript">
+		var clientId = '#(client.id)';
+		function addConfig() {
+			window.location.href = '/home?method=addConfig&clientId=' + clientId;
+		}
+		function doDelete(id) {
+			layer.confirm('确认删除吗?', function(index){
+				$.get("/tool?method=deleteConfig&id="+id, {}, function(data, textStatus, req) {
+					window.location.reload();
+				});
+			  //layer.close(index);
+			});
+		}
+	</script>
+
+
+</body>
+</html>
