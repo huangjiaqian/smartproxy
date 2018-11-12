@@ -23,6 +23,11 @@ public class PageInterceptor implements BaseInterceptor {
 	@Override
 	public boolean before(Request request, Response response, ReqModel reqModel, RespMpdel respMpdel) throws SQLException, IOException {
 		
+		if(reqModel.getSession().getAttr("_loginUser") == null) {
+			response.redirect("/login", false); //跳转到登录页面
+			return false;
+		}
+		
 		if(shouldRefreshMenu || reqModel.getSession().getAttr("_proxy_client") == null) {
 			List<Map<String, Object>> list = sqliteHelper.executeQueryForList("select * from proxy_client");
 			reqModel.getSession().setAttr("_proxy_client", list);
@@ -33,10 +38,6 @@ public class PageInterceptor implements BaseInterceptor {
 		
 		respMpdel.put("_host", request.getBaseURL().getHost());
 		
-		if(reqModel.getSession().getAttr("_loginUser") == null) {
-			response.redirect("/login", false); //跳转到登录页面
-			return false;
-		}
 		respMpdel.put("_loginUser", reqModel.getSession().getAttr("_loginUser"));
 		return true;
 	}

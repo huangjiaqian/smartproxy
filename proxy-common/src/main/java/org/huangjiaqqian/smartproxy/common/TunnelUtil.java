@@ -3,9 +3,8 @@ package org.huangjiaqqian.smartproxy.common;
 import java.io.IOException;
 import java.util.Arrays;
 
+import org.huangjiaqqian.smartproxy.common.netty.BaseChannelObjCache;
 import org.huangjiaqqian.smartproxy.common.netty.ChannelObj;
-import org.huangjiaqqian.smartproxy.common.netty.ClientChannelObjCache;
-import org.huangjiaqqian.smartproxy.common.netty.ServerChannelObjCache;
 
 import com.vecsight.dragonite.sdk.exception.IncorrectSizeException;
 import com.vecsight.dragonite.sdk.exception.SenderClosedException;
@@ -64,7 +63,7 @@ public class TunnelUtil {
 		}
 	}
 
-	public static final void closeAndRemoveChannelObj(DragoniteSocket dragoniteSocket, ChannelObj channelObj, boolean isServerTunnel) {
+	public static final void closeAndRemoveChannelObj(DragoniteSocket dragoniteSocket, ChannelObj channelObj, BaseChannelObjCache channelObjCache) {
 		if (channelObj == null) {
 			return;
 		}
@@ -73,11 +72,8 @@ public class TunnelUtil {
 		}
 		// 发送关闭连接消息
 		TunnelUtil.sendCloseConn(dragoniteSocket, channelObj.getConnId());
-		if(isServerTunnel) {
-			ServerChannelObjCache.removeChannelObj(channelObj.getChannel());			
-		} else {
-			ClientChannelObjCache.removeChannelObj(channelObj.getChannel());
-		}
+		
+		channelObjCache.removeChannelObj(channelObj.getChannel());			
 	}
 	
 }

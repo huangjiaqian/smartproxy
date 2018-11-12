@@ -1,15 +1,10 @@
 package org.huangjiaqqian.smartproxy.common;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import org.huangjiaqqian.smartproxy.common.netty.ChannelObj;
 import org.huangjiaqqian.smartproxy.common.netty.ClientChannelObjCache;
 
-import com.vecsight.dragonite.sdk.exception.ConnectionNotAliveException;
-import com.vecsight.dragonite.sdk.exception.SenderClosedException;
 import com.vecsight.dragonite.sdk.socket.DragoniteSocket;
 
 import io.netty.bootstrap.Bootstrap;
@@ -25,17 +20,17 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 
-public class ClientTunnel {
+public class ClientTunnel extends BaseTunnel {
+	
+	private ClientChannelObjCache clientChannelObjCache;
+	
+	protected EventLoopGroup workerGroup;
+	protected Bootstrap bootstrap;
 
-	protected DragoniteSocket dragoniteSocket;
-
-	protected ExecutorService es = Executors.newCachedThreadPool();
-
-	private EventLoopGroup workerGroup;
-	private Bootstrap bootstrap;
-
-	public ClientTunnel() throws IOException {
+	public ClientTunnel() {
 		super();
+		clientChannelObjCache = new ClientChannelObjCache();
+		
 		workerGroup = new NioEventLoopGroup();
 		bootstrap = new Bootstrap();
 		bootstrap.group(workerGroup) // 注册线程池
@@ -62,7 +57,7 @@ public class ClientTunnel {
 
 	private void closeSocketAndRemove(short connId, Channel channel) {
 		closeSocket(channel);
-		ClientChannelObjCache.removeChannelObj(connId);
+		clientChannelObjCache.removeChannelObj(connId);
 	}
 
 	private void writeData(byte[] buf) {
@@ -73,7 +68,7 @@ public class ClientTunnel {
 		}
 	}
 
-	private void doExecuteWithConn(byte[] buf, BinaryReader reader) {
+	protected void doExecuteWithConn(byte[] buf, BinaryReader reader) {
 		byte secondFlag = reader.getSignedByte();
 		short connId = reader.getSignedShort();
 
@@ -97,7 +92,7 @@ public class ClientTunnel {
 						writer.putSignedByte((byte) 4);
 						writer.putSignedShort(connId);
 
-						ClientChannelObjCache.addChannelObj(connId, channelFuture.channel());
+						clientChannelObjCache.addChannelObj(connId, channelFuture.channel());
 						// 发送连接成功消息
 						writeData(writer.toBytes());
 					} else {
@@ -115,7 +110,7 @@ public class ClientTunnel {
 			// 发送数据
 			byte[] data = new byte[buf.length - 6];
 			reader.getBytes(data);
-			ChannelObj channelObj = ClientChannelObjCache.getChannelObj(connId);
+			ChannelObj channelObj = clientChannelObjCache.getChannelObj(connId);
 			if (channelObj == null) {
 				return;
 			}
@@ -132,7 +127,7 @@ public class ClientTunnel {
 
 		} else if ((byte) 3 == secondFlag) {
 			// 关闭连接
-			ChannelObj channelObj = ClientChannelObjCache.getChannelObj(connId);
+			ChannelObj channelObj = clientChannelObjCache.getChannelObj(connId);
 			if(channelObj == null) {
 				return;
 			}
@@ -140,28 +135,6 @@ public class ClientTunnel {
 			closeSocketAndRemove(connId, channel);
 
 		}
-	}
-
-	/**
-	 * 执行除连接的其他操作
-	 * 
-	 * @param buf
-	 * @param reader
-	 */
-	protected void doExecuteOther(byte[] buf, BinaryReader reader) {
-
-	}
-
-	private void executeRead(byte[] buf) {
-		BinaryReader reader = new BinaryReader(buf);
-		byte flag = reader.getSignedByte();
-
-		if ((byte) 1 == flag) {
-			doExecuteWithConn(buf, reader);
-		} else {
-			doExecuteOther(buf, reader);
-		}
-
 	}
 
 	class SocketClientHandler extends ChannelInboundHandlerAdapter {
@@ -177,7 +150,7 @@ public class ClientTunnel {
 	    	byte[] buf = new byte[byteBuf.readableBytes()];
 	    	byteBuf.getBytes(byteBuf.readerIndex(), buf);
 
-			ChannelObj channelObj = ClientChannelObjCache.getChannelObj(ctx.channel());
+			ChannelObj channelObj = clientChannelObjCache.getChannelObj(ctx.channel());
 			if (channelObj != null) {
 				TunnelUtil.sendDataBytes(dragoniteSocket, buf, channelObj.getConnId());
 			}
@@ -203,7 +176,7 @@ public class ClientTunnel {
 		}
 
 		private void closeChannel(ChannelHandlerContext ctx) {
-			ChannelObj channelObj = ClientChannelObjCache.getChannelObj(ctx.channel());
+			ChannelObj channelObj = clientChannelObjCache.getChannelObj(ctx.channel());
 			if (channelObj == null) {
 				return;
 			}
@@ -213,66 +186,13 @@ public class ClientTunnel {
 			}
 			// 发送关闭连接消息
 			TunnelUtil.sendCloseConn(dragoniteSocket, channelObj.getConnId());
-			ClientChannelObjCache.removeChannelObj(ctx.channel());
+			clientChannelObjCache.removeChannelObj(ctx.channel());
 		}
 	}
 
 	protected void dragoniteSocketReadFinish() {
 		es.shutdownNow(); // 停止所有线程
-		ClientChannelObjCache.clear();
-		//workerGroup.shutdownGracefully();
-	}
-
-	protected void startDragoniteSocketRead() {
-
-		es.execute(() -> {
-
-			byte[] dataBuffer = null; // 数据缓存
-			int dataLen = 0; // 数据长度
-			int currentLen = 0; // 当前长度
-
-			while (true) {
-				try {
-					byte[] buf = dragoniteSocket.read();
-
-					int lenByteLen = 0;
-					if (dataBuffer == null) {
-						lenByteLen = 4;
-
-						byte[] lenByte = new byte[lenByteLen];
-						System.arraycopy(buf, 0, lenByte, 0, lenByteLen);
-
-						dataLen = Util.Byte2Int(lenByte);
-						dataBuffer = new byte[dataLen]; // 大数据块
-						currentLen = 0;
-
-					}
-
-					int currentDataLen = buf.length - lenByteLen;
-					System.arraycopy(buf, lenByteLen, dataBuffer, currentLen, currentDataLen);
-					currentLen += currentDataLen;
-
-					if (new Integer(currentLen).equals(new Integer(dataLen))) {
-
-						/////
-						executeRead(dataBuffer);
-						/////
-
-						dataBuffer = null;
-					}
-				} catch (InterruptedException | ConnectionNotAliveException e) {
-					if (dragoniteSocket != null) {
-						try {
-							dragoniteSocket.closeGracefully();
-						} catch (SenderClosedException | InterruptedException | IOException e1) {
-							e1.printStackTrace();
-						}
-					}
-					break;
-				}
-			}
-			dragoniteSocketReadFinish();
-		});
+		clientChannelObjCache.clear();
 	}
 
 	public DragoniteSocket getDragoniteSocket() {

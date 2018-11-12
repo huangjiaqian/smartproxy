@@ -23,7 +23,9 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 
 public class NettyTcpServer {
-
+	
+	protected ServerChannelObjCache channelObjCache;
+	
 	public static int bufSize = 1024;
 
 	private EventLoopGroup bossGroup = new NioEventLoopGroup(); // accept线城市
@@ -36,12 +38,14 @@ public class NettyTcpServer {
 
 	private DragoniteSocket dragoniteSocket;
 
-	public NettyTcpServer(DragoniteSocket dragoniteSocket, int bindPort, InetSocketAddress natAddr) {
+	public NettyTcpServer(DragoniteSocket dragoniteSocket, int bindPort, InetSocketAddress natAddr, ServerChannelObjCache channelObjCache) {
 		super();
 		this.bindPort = bindPort;
 		this.dragoniteSocket = dragoniteSocket;
 
 		natAddrBytes = Util.genAddrBytes(natAddr.getHostString(), natAddr.getPort());
+		
+		this.channelObjCache = channelObjCache;
 	}
 
 	public void start() throws InterruptedException {
@@ -85,7 +89,7 @@ public class NettyTcpServer {
 			byte[] buf = new byte[byteBuf.readableBytes()];
 			byteBuf.getBytes(byteBuf.readerIndex(), buf);
 
-			ChannelObj channelObj = ServerChannelObjCache.getChannelObj(ctx.channel());
+			ChannelObj channelObj = channelObjCache.getChannelObj(ctx.channel());
 			if (channelObj != null) {
 				TunnelUtil.sendDataBytes(dragoniteSocket, buf, channelObj.getConnId());
 			}
@@ -96,7 +100,7 @@ public class NettyTcpServer {
 				upFlow = upFlow == null ? buf.length : (upFlow + buf.length);
 				ServerTunnel.upFlowMap.put(currentPort, upFlow);
 			}
-
+			
 			// ReferenceCountUtil.release(msg); // 释放
 			super.channelRead(ctx, msg);
 		}
@@ -105,7 +109,7 @@ public class NettyTcpServer {
 		public void channelActive(ChannelHandlerContext ctx) throws Exception {
 			// System.out.println("连接打开...");
 
-			ChannelObj channelObj = ServerChannelObjCache.addChannelObj(ctx.channel());
+			ChannelObj channelObj = channelObjCache.addChannelObj(ctx.channel());
 
 			byte flag = (byte) 1;
 			byte secondFlag = (byte) 1;
@@ -140,7 +144,7 @@ public class NettyTcpServer {
 		}
 
 		private void closeChannel(ChannelHandlerContext ctx) {
-			ChannelObj channelObj = ServerChannelObjCache.getChannelObj(ctx.channel());
+			ChannelObj channelObj = channelObjCache.getChannelObj(ctx.channel());
 			if (channelObj == null) {
 				return;
 			}
@@ -151,7 +155,7 @@ public class NettyTcpServer {
 			}
 			// 发送关闭连接消息
 			TunnelUtil.sendCloseConn(dragoniteSocket, channelObj.getConnId());
-			ServerChannelObjCache.removeChannelObj(ctx.channel());
+			channelObjCache.removeChannelObj(ctx.channel());
 		}
 	}
 

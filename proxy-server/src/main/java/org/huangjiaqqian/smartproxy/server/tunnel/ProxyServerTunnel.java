@@ -34,7 +34,7 @@ public class ProxyServerTunnel extends ServerTunnel {
 	private boolean active;
 
 	private static boolean isStartStatisticsFlow = false;
-
+	
 	public ProxyServerTunnel(DragoniteSocket dragoniteSocket) throws IOException {
 		this.dragoniteSocket = dragoniteSocket;
 		remoteAddr = (InetSocketAddress) dragoniteSocket.getRemoteSocketAddress();
@@ -123,7 +123,7 @@ public class ProxyServerTunnel extends ServerTunnel {
 		if (!active) {
 			return;
 		}
-		NettyTcpServer nettyServer = new NettyTcpServer(dragoniteSocket, bindPort, natAddr);
+		NettyTcpServer nettyServer = new NettyTcpServer(dragoniteSocket, bindPort, natAddr, channelObjCache);
 		nettyServer.start();
 		nettyServerMap.put(bindPort, nettyServer);
 		
