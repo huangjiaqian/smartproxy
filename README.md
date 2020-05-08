@@ -19,7 +19,7 @@ smartproxy是基于java实现的将局域网电脑的端口映射到公网。或
  - 解压 smartproxy-server.zip 包，运行里面的proxy-server.jar文件即可
  - nohup java -jar proxy-server.jar &
    
- - 运行后可用浏览器打开http://ip:8088 ，在里面进行配置，添加客户端
+ - 运行后可用浏览器打开http://ip:8088 ，(默认用户名密码为 admin/admin) 在里面进行配置，添加客户端
    
  - 默认隧道端口号为12222，http服务端口为8088，可用如下参数运行，修改默认值(如分别改为12221和8080)
    nohup java -jar proxy-server.jar tunnelPort=12221 httpPort=8080 &
@@ -37,7 +37,7 @@ smartproxy是基于java实现的将局域网电脑的端口映射到公网。或
 ##### 使用
  - 局域网连接成功后，浏览器打开http://公网ip:8088 进行端口配置
  
-##### 直连客户端使用
+##### 直连客户端(p2p)使用
  - 解压smartproxy-p2p-client.zip
  - nohup java -jar proxy-p2p-client.jar 1995 &
  - 浏览器打开 http://localhost:1995，进行连接配置。
